@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flag Duel</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 30%, #2b3550, #12151f 70%);
+    font-family: "Trebuchet MS", Verdana, sans-serif; color: #eef; user-select: none;
+  }
+  #app { display: flex; gap: 18px; align-items: stretch; }
+  #side { width: 170px; display: flex; flex-direction: column; gap: 12px; }
+  .panel {
+    border-radius: 12px; padding: 12px; text-align: center; position: relative;
+    border: 3px solid transparent; transition: transform .15s, box-shadow .15s;
+  }
+  .panel.p0 { background: linear-gradient(#ff9a3c, #d4581a); }
+  .panel.p1 { background: linear-gradient(#a77bff, #5a32b8); }
+  .panel.active { border-color: #fff; box-shadow: 0 0 18px rgba(255,255,255,.55); transform: scale(1.04); }
+  .pname { font-weight: bold; font-size: 20px; letter-spacing: 1px; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+  .pkind { font-size: 12px; opacity: .85; }
+  .score { font-size: 40px; font-weight: bold; text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+  .msg { font-size: 12px; min-height: 30px; }
+  .bombbtn {
+    margin-top: 4px; width: 100%; padding: 6px; border-radius: 8px; border: 2px solid rgba(0,0,0,.3);
+    background: #222a; color: #fff; font-weight: bold; cursor: pointer; font-family: inherit;
+  }
+  .bombbtn:disabled { opacity: .35; cursor: default; }
+  .bombbtn.armed { background: #ffe14a; color: #000; }
+  #left {
+    background: #1d2333; border-radius: 12px; padding: 10px; text-align: center; border: 2px solid #3a4560;
+  }
+  #left .n { font-size: 34px; font-weight: bold; color: #ffe14a; }
+  #left .l { font-size: 11px; opacity: .7; letter-spacing: 1px; }
+  .btn {
+    padding: 8px; border-radius: 8px; border: 2px solid #3a4560; background: #262e44; color: #eef;
+    font-weight: bold; cursor: pointer; font-family: inherit; letter-spacing: 1px;
+  }
+  .btn:hover { background: #313b57; }
+  #boardwrap { background: #0c0f17; padding: 10px; border-radius: 14px; border: 3px solid #3a4560; position: relative; }
+  canvas { display: block; cursor: pointer; }
+  #overlay {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(8,10,18,.78); border-radius: 12px; flex-direction: column; gap: 14px;
+  }
+  #overlay h1 { margin: 0; font-size: 46px; text-shadow: 0 4px 0 #000; }
+  #overlay p { margin: 0; opacity: .85; }
+  #menu {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(8,10,18,.9); z-index: 5;
+  }
+  #menu .box { background: #1d2333; border: 3px solid #3a4560; border-radius: 16px; padding: 28px 36px; text-align: center; width: 380px; }
+  #menu h1 { margin: 0 0 4px; font-size: 44px; letter-spacing: 2px; }
+  #menu h1 .o { color: #ff9a3c; } #menu h1 .v { color: #a77bff; }
+  #menu .sub { opacity: .7; font-size: 13px; margin-bottom: 18px; }
+  #menu .btn { display: block; width: 100%; margin: 8px 0; font-size: 16px; padding: 12px; }
+  #menu .rules { font-size: 12px; text-align: left; opacity: .8; line-height: 1.5; margin-top: 14px; }
+  #menu label { font-size: 13px; opacity: .85; }
+  #menu select { font-family: inherit; background: #262e44; color: #eef; border: 1px solid #3a4560; border-radius: 6px; padding: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <div class="panel p0" id="panel0">
+      <div class="pname">ORANGE</div>
+      <div class="pkind" id="kind0">Player 1</div>
+      <div class="score" id="score0">0</div>
+      <div class="msg" id="msg0"></div>
+      <button class="bombbtn" id="bomb0">BOMB</button>
+    </div>
+    <div id="left"><div class="n" id="minesLeft">51</div><div class="l">MINES LEFT</div></div>
+    <div class="panel p1" id="panel1">
+      <div class="pname">VIOLET</div>
+      <div class="pkind" id="kind1">CPU</div>
+      <div class="score" id="score1">0</div>
+      <div class="msg" id="msg1"></div>
+      <button class="bombbtn" id="bomb1">BOMB</button>
+    </div>
+    <button class="btn" id="resignBtn">RESIGN</button>
+    <button class="btn" id="muteBtn">SOUND: ON</button>
+  </div>
+  <div id="boardwrap">
+    <canvas id="cv"></canvas>
+    <div id="overlay">
+      <h1 id="winText">ORANGE WINS!</h1>
+      <p id="winSub"></p>
+      <button class="btn" id="againBtn">PLAY AGAIN</button>
+      <button class="btn" id="menuBtn">MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+<div id="menu">
+  <div class="box">
+    <h1><span class="o">FLAG</span> <span class="v">DUEL</span></h1>
+    <div class="sub">a two-player mine hunt</div>
+    <button class="btn" id="vsCpu">1 PLAYER vs CPU</button>
+    <button class="btn" id="vsHuman">2 PLAYERS (same screen)</button>
+    <label>CPU skill:
+      <select id="skill">
+        <option value="0">Easy</option>
+        <option value="1" selected>Normal</option>
+        <option value="2">Hard</option>
+      </select>
+    </label>
+    <div class="rules">
+      • 16×16 field, 51 hidden mines. Take turns uncovering squares.<br>
+      • <b>Hit a mine = you claim it and go again.</b> Hit a number/blank = turn passes.<br>
+      • First to <b>26 mines</b> wins.<br>
+      • Each player gets <b>one bomb</b> (blows open a 5×5 area), usable only while behind.<br>
+      • Right-click / B toggles the bomb. Esc cancels.
+    </div>
+  </div>
+</div>
+
+<script>
+const W = 16, H = 16, MINES = 51, WIN = 26, CS = 34;
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+cv.width = W * CS; cv.height = H * CS;
+
+const NUMCOL = ['', '#2f6fd8', '#2c9a3a', '#d8342c', '#1d2a8a', '#8a1d1d', '#178a8a', '#222', '#777'];
+const PCOL = [['#ff9a3c', '#c2500f'], ['#a77bff', '#5a32b8']];
+
+let mine, num, open, owner, scores, turn, bombs, armed, hover, lastMove, over, mode, skill, busy, minesLeft;
+let muted = false;
+
+// ---------- sound ----------
+let ac = null;
+function tone(f, d, type = 'square', v = 0.08, slide = 0) {
+  if (muted) return;
+  if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d);
+}
+const sfx = {
+  click: () => tone(520, 0.06, 'triangle', 0.1),
+  flag: () => { tone(660, 0.08); setTimeout(() => tone(990, 0.12), 70); },
+  boom: () => { tone(160, 0.5, 'sawtooth', 0.14, -120); tone(90, 0.6, 'square', 0.1, -50); },
+  win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.22, 'square', 0.09), i * 140)),
+  lose: () => [392, 330, 262].forEach((f, i) => setTimeout(() => tone(f, 0.3, 'triangle', 0.1), i * 180)),
+};
+
+// ---------- game setup ----------
+function newGame() {
+  mine = new Array(W * H).fill(false);
+  num = new Array(W * H).fill(0);
+  open = new Array(W * H).fill(false);
+  owner = new Array(W * H).fill(-1);
+  scores = [0, 0]; bombs = [true, true]; armed = false; hover = -1; lastMove = []; over = false; busy = false;
+  minesLeft = MINES;
+  turn = Math.random() < 0.5 ? 0 : 1;
+  let placed = 0;
+  while (placed < MINES) {
+    const i = (Math.random() * W * H) | 0;
+    if (!mine[i]) { mine[i] = true; placed++; }
+  }
+  for (let i = 0; i < W * H; i++) num[i] = nbrs(i).filter(j => mine[j]).length;
+  document.getElementById('overlay').style.display = 'none';
+  updateUI(); draw();
+  maybeCpu();
+}
+
+function nbrs(i) {
+  const x = i % W, y = (i / W) | 0, r = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    if (!dx && !dy) continue;
+    const nx = x + dx, ny = y + dy;
+    if (nx >= 0 && ny >= 0 && nx < W && ny < H) r.push(ny * W + nx);
+  }
+  return r;
+}
+function area5(i) {
+  const x = i % W, y = (i / W) | 0, r = [];
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+    const nx = x + dx, ny = y + dy;
+    if (nx >= 0 && ny >= 0 && nx < W && ny < H) r.push(ny * W + nx);
+  }
+  return r;
+}
+
+// reveal a single cell (and flood blanks). Returns number of mines claimed.
+function reveal(i, p) {
+  if (open[i]) return 0;
+  open[i] = true;
+  if (mine[i]) { owner[i] = p; scores[p]++; minesLeft--; return 1; }
+  if (num[i] === 0) {
+    const st = [i];
+    while (st.length) {
+      const c = st.pop();
+      for (const n of nbrs(c)) if (!open[n] && !mine[n]) { open[n] = true; if (num[n] === 0) st.push(n); }
+    }
+  }
+  return 0;
+}
+
+function canBomb(p) { return bombs[p] && scores[p] < scores[1 - p] && !over; }
+
+function play(i, useBomb) {
+  if (over) return;
+  const p = turn;
+  if (useBomb) {
+    if (!canBomb(p)) return;
+    bombs[p] = false; armed = false;
+    const cells = area5(i);
+    lastMove = cells;
+    let got = 0;
+    for (const c of cells) got += reveal(c, p);
+    sfx.boom();
+    shake = 10;
+    if (!checkWin()) turn = 1 - p;
+  } else {
+    if (open[i]) return;
+    lastMove = [i];
+    const got = reveal(i, p);
+    if (got) { sfx.flag(); checkWin(); }
+    else { sfx.click(); turn = 1 - p; }
+  }
+  updateUI(); draw();
+  maybeCpu();
+}
+
+function checkWin() {
+  for (let p = 0; p < 2; p++) if (scores[p] >= WIN) { endGame(p); return true; }
+  return false;
+}
+
+function endGame(p, resigned) {
+  over = true; armed = false;
+  // reveal the rest of the mines (unclaimed)
+  const ov = document.getElementById('overlay');
+  const name = p === 0 ? 'ORANGE' : 'VIOLET';
+  document.getElementById('winText').textContent = name + ' WINS!';
+  document.getElementById('winText').style.color = PCOL[p][0];
+  document.getElementById('winSub').textContent = resigned
+    ? (p === 0 ? 'Violet' : 'Orange') + ' resigned.'
+    : `Final score ${scores[0]} – ${scores[1]}`;
+  if (mode === 'cpu' && p === 1) sfx.lose(); else sfx.win();
+  setTimeout(() => { ov.style.display = 'flex'; draw(); }, 600);
+  updateUI(); draw();
+}
+
+// ---------- CPU ----------
+function isCpu(p) { return mode === 'cpu' && p === 1; }
+
+function maybeCpu() {
+  if (over || !isCpu(turn) || busy) return;
+  busy = true;
+  setTimeout(() => { busy = false; if (!over && isCpu(turn)) cpuMove(); }, 550 + Math.random() * 450);
+}
+
+// Mine probability estimates for every closed cell. Mines are GOOD to click in this game.
+function analyse() {
+  const prob = new Array(W * H).fill(-1);
+  const sure = new Set(), safe = new Set();
+  // iterate simple deductions until stable
+  let changed = true, guard = 0;
+  const known = i => open[i] && mine[i]; // claimed mines
+  while (changed && guard++ < 20) {
+    changed = false;
+    for (let i = 0; i < W * H; i++) {
+      if (!open[i] || mine[i] || num[i] === 0) continue;
+      const ns = nbrs(i);
+      const closed = ns.filter(n => !open[n] && !sure.has(n) && !safe.has(n));
+      const mines = ns.filter(n => known(n) || sure.has(n)).length;
+      const need = num[i] - mines;
+      if (!closed.length) continue;
+      if (need === closed.length) { closed.forEach(n => sure.add(n)); changed = true; }
+      else if (need === 0) { closed.forEach(n => safe.add(n)); changed = true; }
+    }
+  }
+  const closedCount = open.reduce((a, o) => a + (o ? 0 : 1), 0);
+  const unknownMines = minesLeft - sure.size;
+  const unknownCells = closedCount - sure.size - safe.size;
+  const density = unknownCells > 0 ? unknownMines / unknownCells : 0;
+  for (let i = 0; i < W * H; i++) {
+    if (open[i]) continue;
+    if (sure.has(i)) { prob[i] = 1; continue; }
+    if (safe.has(i)) { prob[i] = 0; continue; }
+    let best = -1;
+    for (const n of nbrs(i)) {
+      if (!open[n] || mine[n]) continue;
+      const ns = nbrs(n);
+      const closed = ns.filter(m => !open[m] && !sure.has(m) && !safe.has(m));
+      const need = num[n] - ns.filter(m => known(m) || sure.has(m)).length;
+      if (closed.length) {
+        const pr = need / closed.length;
+        best = best < 0 ? pr : (pr === 0 ? 0 : Math.max(best, pr) * 0.6 + Math.min(best, pr) * 0.4);
+        if (pr === 0) { best = 0; break; }
+      }
+    }
+    prob[i] = best < 0 ? density : best;
+  }
+  return { prob, sure };
+}
+
+function cpuMove() {
+  const { prob, sure } = analyse();
+  const p = turn;
+  const closed = [];
+  for (let i = 0; i < W * H; i++) if (!open[i]) closed.push(i);
+  if (!closed.length) return;
+
+  // Bomb decision
+  if (canBomb(p) && (scores[1 - p] - scores[p] >= (skill === 2 ? 3 : 5) || scores[1 - p] >= WIN - 6)) {
+    let bestC = -1, bestV = 0;
+    for (let i = 0; i < W * H; i++) {
+      let v = 0;
+      for (const c of area5(i)) if (!open[c] && prob[c] < 1) v += prob[c];
+      if (v > bestV) { bestV = v; bestC = i; }
+    }
+    if (bestC >= 0 && bestV >= (skill === 0 ? 1.5 : 2.5) && (sure.size === 0 || skill === 0)) {
+      play(bestC, true); return;
+    }
+  }
+
+  // Certain mines first (easy CPU sometimes misses them)
+  const sureList = [...sure];
+  if (sureList.length && !(skill === 0 && Math.random() < 0.35)) {
+    play(sureList[(Math.random() * sureList.length) | 0], false); return;
+  }
+
+  let pick;
+  if (skill === 0) {
+    // mostly random with a slight bias toward likely mines
+    pick = Math.random() < 0.5
+      ? closed[(Math.random() * closed.length) | 0]
+      : weightedBest(closed, prob, 0.25);
+  } else {
+    pick = weightedBest(closed, prob, skill === 2 ? 0.0 : 0.08);
+  }
+  play(pick, false);
+}
+
+function weightedBest(cells, prob, noise) {
+  let best = -1, bv = -1;
+  for (const c of cells) {
+    const v = prob[c] + Math.random() * noise + Math.random() * 0.001;
+    if (v > bv) { bv = v; best = c; }
+  }
+  return best;
+}
+
+// ---------- drawing ----------
+let shake = 0;
+function drawFlag(x, y, p) {
+  const [c1, c2] = PCOL[p];
+  // pole
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(x + 10, y + 6, 3, 22);
+  ctx.fillRect(x + 6, y + 26, 13, 3);
+  // pennant (triangular, original style)
+  ctx.beginPath();
+  ctx.moveTo(x + 13, y + 6);
+  ctx.lineTo(x + 28, y + 12);
+  ctx.lineTo(x + 13, y + 18);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(x + 13, y + 6, x + 28, y + 18);
+  g.addColorStop(0, c1); g.addColorStop(1, c2);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1; ctx.stroke();
+  // small star
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(x + 18, y + 12, 1.8, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawMine(x, y) {
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.arc(x + CS / 2, y + CS / 2, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+  for (let a = 0; a < 4; a++) {
+    const ang = a * Math.PI / 4;
+    ctx.beginPath();
+    ctx.moveTo(x + CS / 2 + Math.cos(ang) * 12, y + CS / 2 + Math.sin(ang) * 12);
+    ctx.lineTo(x + CS / 2 - Math.cos(ang) * 12, y + CS / 2 - Math.sin(ang) * 12);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(x + CS / 2 - 3, y + CS / 2 - 3, 2, 0, Math.PI * 2); ctx.fill();
+}
+
+function draw() {
+  ctx.save();
+  if (shake > 0) { ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake); }
+  ctx.fillStyle = '#0c0f17'; ctx.fillRect(-20, -20, cv.width + 40, cv.height + 40);
+  const bombArea = armed && hover >= 0 ? new Set(area5(hover)) : null;
+  for (let i = 0; i < W * H; i++) {
+    const x = (i % W) * CS, y = ((i / W) | 0) * CS;
+    if (!open[i]) {
+      // closed tile: raised slate block with a checker tint
+      const alt = ((i % W) + ((i / W) | 0)) % 2;
+      const g = ctx.createLinearGradient(x, y, x, y + CS);
+      g.addColorStop(0, alt ? '#5e7fa3' : '#58789c');
+      g.addColorStop(1, alt ? '#3c5677' : '#385170');
+      ctx.fillStyle = g; ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+      ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(x + 1, y + 1, CS - 2, 3);
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 1, y + CS - 4, CS - 2, 3);
+      if (i === hover && !over && !armed && !isCpu(turn)) {
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+      }
+      if (over && mine[i]) drawMine(x, y);
+    } else {
+      ctx.fillStyle = owner[i] >= 0 ? (owner[i] === 0 ? '#ffe2c4' : '#e6dcff') : '#e9e4d6';
+      ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+      if (mine[i]) drawFlag(x, y, owner[i]);
+      else if (num[i]) {
+        ctx.fillStyle = NUMCOL[num[i]];
+        ctx.font = 'bold 20px Verdana';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(num[i], x + CS / 2, y + CS / 2 + 1);
+      }
+    }
+    if (bombArea && bombArea.has(i)) {
+      ctx.fillStyle = 'rgba(255,60,40,.35)'; ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+    }
+  }
+  // last move marker
+  if (lastMove.length) {
+    const xs = lastMove.map(i => i % W), ys = lastMove.map(i => (i / W) | 0);
+    const x0 = Math.min(...xs) * CS, y0 = Math.min(...ys) * CS;
+    const x1 = (Math.max(...xs) + 1) * CS, y1 = (Math.max(...ys) + 1) * CS;
+    ctx.strokeStyle = '#ffe14a'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4);
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+  if (shake > 0) { shake *= 0.85; if (shake < 0.5) shake = 0; requestAnimationFrame(draw); }
+}
+
+// ---------- UI ----------
+function updateUI() {
+  for (let p = 0; p < 2; p++) {
+    document.getElementById('score' + p).textContent = scores[p];
+    document.getElementById('panel' + p).classList.toggle('active', turn === p && !over);
+    const b = document.getElementById('bomb' + p);
+    b.disabled = !canBomb(p) || turn !== p || isCpu(p);
+    b.textContent = !bombs[p] ? 'BOMB USED' : (armed && turn === p ? 'BOMB ARMED' : 'BOMB');
+    b.classList.toggle('armed', armed && turn === p);
+    let m = '';
+    if (!over && turn === p) {
+      if (isCpu(p)) m = 'Thinking…';
+      else if (WIN - scores[p] === 1) m = '1 more mine to win!';
+      else m = 'Your turn — make a move.';
+    }
+    document.getElementById('msg' + p).textContent = m;
+  }
+  document.getElementById('kind0').textContent = 'Player 1';
+  document.getElementById('kind1').textContent = mode === 'cpu' ? 'CPU (' + ['Easy', 'Normal', 'Hard'][skill] + ')' : 'Player 2';
+  document.getElementById('minesLeft').textContent = minesLeft;
+}
+
+function cellAt(e) {
+  const r = cv.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / (r.width / W));
+  const y = Math.floor((e.clientY - r.top) / (r.height / H));
+  return x >= 0 && y >= 0 && x < W && y < H ? y * W + x : -1;
+}
+
+cv.addEventListener('mousemove', e => { const c = cellAt(e); if (c !== hover) { hover = c; draw(); } });
+cv.addEventListener('mouseleave', () => { hover = -1; draw(); });
+cv.addEventListener('click', e => {
+  if (over || isCpu(turn) || busy) return;
+  const c = cellAt(e); if (c < 0) return;
+  if (armed) play(c, true);
+  else if (!open[c]) play(c, false);
+});
+cv.addEventListener('contextmenu', e => { e.preventDefault(); toggleBomb(); });
+
+function toggleBomb() {
+  if (over || isCpu(turn)) return;
+  if (!armed && !canBomb(turn)) return;
+  armed = !armed; updateUI(); draw();
+}
+for (let p = 0; p < 2; p++) document.getElementById('bomb' + p).onclick = () => { if (turn === p) toggleBomb(); };
+window.addEventListener('keydown', e => {
+  if (e.key === 'b' || e.key === 'B') toggleBomb();
+  if (e.key === 'Escape' && armed) { armed = false; updateUI(); draw(); }
+});
+
+document.getElementById('resignBtn').onclick = () => {
+  if (over || document.getElementById('menu').style.display !== 'none') return;
+  const loser = mode === 'cpu' ? 0 : turn;
+  if (confirm((loser === 0 ? 'Orange' : 'Violet') + ': resign this game?')) endGame(1 - loser, true);
+};
+document.getElementById('muteBtn').onclick = e => { muted = !muted; e.target.textContent = 'SOUND: ' + (muted ? 'OFF' : 'ON'); };
+document.getElementById('againBtn').onclick = newGame;
+document.getElementById('menuBtn').onclick = () => { document.getElementById('menu').style.display = 'flex'; };
+function start(m) {
+  mode = m; skill = +document.getElementById('skill').value;
+  document.getElementById('menu').style.display = 'none';
+  newGame();
+}
+document.getElementById('vsCpu').onclick = () => start('cpu');
+document.getElementById('vsHuman').onclick = () => start('human');
+
+// initial empty board behind menu
+mode = 'cpu'; skill = 1;
+mine = new Array(W * H).fill(false); num = new Array(W * H).fill(0); open = new Array(W * H).fill(false);
+owner = new Array(W * H).fill(-1); scores = [0, 0]; bombs = [true, true]; lastMove = []; turn = 0; minesLeft = MINES; over = true;
+updateUI(); draw();
+</script>
+</body>
+</html>
