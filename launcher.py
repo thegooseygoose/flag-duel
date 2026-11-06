@@ -17,8 +17,8 @@ def main():
     webview.create_window(
         "Flag Duel",
         resource_path("index.html"),
-        width=840,
-        height=660,
+        width=1100,
+        height=860,
         resizable=True,
         confirm_close=False,
     )
