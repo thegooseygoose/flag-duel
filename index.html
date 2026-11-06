@@ -7,88 +7,143 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 30%, #2b3550, #12151f 70%);
-    font-family: "Trebuchet MS", Verdana, sans-serif; color: #eef; user-select: none;
+    background: linear-gradient(#3b4f86, #1f2a4d);
+    font-family: Tahoma, Verdana, sans-serif; color: #fff; user-select: none;
   }
-  #app { display: flex; gap: 18px; align-items: stretch; }
-  #side { width: 170px; display: flex; flex-direction: column; gap: 12px; }
+  #frame {
+    display: flex; gap: 10px; padding: 10px; border-radius: 10px;
+    background: linear-gradient(#5d6f9f, #2f3b62); border: 2px solid #8796c2;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  }
+  #side { width: 136px; display: flex; flex-direction: column; gap: 0; }
   .panel {
-    border-radius: 12px; padding: 12px; text-align: center; position: relative;
-    border: 3px solid transparent; transition: transform .15s, box-shadow .15s;
+    position: relative; border: 2px solid rgba(0,0,0,.4); border-radius: 6px;
+    padding: 4px 6px 6px; text-align: center; overflow: visible;
   }
-  .panel.p0 { background: linear-gradient(#ff9a3c, #d4581a); }
-  .panel.p1 { background: linear-gradient(#a77bff, #5a32b8); }
-  .panel.active { border-color: #fff; box-shadow: 0 0 18px rgba(255,255,255,.55); transform: scale(1.04); }
-  .pname { font-weight: bold; font-size: 20px; letter-spacing: 1px; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
-  .pkind { font-size: 12px; opacity: .85; }
-  .score { font-size: 40px; font-weight: bold; text-shadow: 0 3px 0 rgba(0,0,0,.35); }
-  .msg { font-size: 12px; min-height: 30px; }
+  .panel.p0 { background: linear-gradient(#ffb15a 0%, #f07a22 45%, #c4520e 100%); }
+  .panel.p1 { background: linear-gradient(#c7a6ff 0%, #8f63e8 45%, #5b34ad 100%); }
+  .panel .title {
+    font-weight: bold; font-size: 15px; letter-spacing: 1px; color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,.5); border-bottom: 1px solid rgba(255,255,255,.4); padding-bottom: 2px;
+  }
+  .avatar { width: 34px; height: 36px; margin: 5px auto 2px; position: relative; }
+  .avatar .head { position: absolute; left: 9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid rgba(0,0,0,.35); }
+  .avatar .body { position: absolute; left: 2px; top: 17px; width: 30px; height: 18px; border-radius: 15px 15px 4px 4px; background: #fff; border: 2px solid rgba(0,0,0,.35); }
+  .pkind { font-size: 10px; opacity: .95; font-weight: bold; }
+  .arrow { font-size: 10px; line-height: 10px; opacity: .8; }
+  .msg { font-size: 10px; min-height: 38px; line-height: 12px; margin-top: 3px; color: #fff8b0; font-weight: bold; }
+  .turnptr {
+    position: absolute; left: -4px; top: 30px; font-size: 22px; display: none;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); animation: bob .6s ease-in-out infinite alternate;
+  }
+  .panel.active .turnptr { display: block; }
+  .panel.active { box-shadow: 0 0 0 2px #fff inset; }
+  @keyframes bob { from { transform: translate(0,0) } to { transform: translate(4px,3px) } }
+  .row { display: flex; gap: 4px; align-items: center; justify-content: space-between; margin-top: 2px; }
+  .flagbox {
+    flex: 1; display: flex; align-items: center; gap: 3px; background: #fff; color: #111; border-radius: 4px;
+    padding: 1px 4px; font-weight: bold; font-size: 15px; border: 1px solid rgba(0,0,0,.4);
+  }
+  .flagbox canvas { width: 16px; height: 18px; }
   .bombbtn {
-    margin-top: 4px; width: 100%; padding: 6px; border-radius: 8px; border: 2px solid rgba(0,0,0,.3);
-    background: #222a; color: #fff; font-weight: bold; cursor: pointer; font-family: inherit;
+    width: 34px; height: 24px; border-radius: 4px; border: 1px solid rgba(0,0,0,.5); background: #fff;
+    cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; position: relative;
   }
-  .bombbtn:disabled { opacity: .35; cursor: default; }
-  .bombbtn.armed { background: #ffe14a; color: #000; }
-  #left {
-    background: #1d2333; border-radius: 12px; padding: 10px; text-align: center; border: 2px solid #3a4560;
+  .bombbtn.ready { background: #ffe14a; animation: glow 0.8s ease-in-out infinite alternate; }
+  .bombbtn.armed { background: #ff6a3a; }
+  .bombbtn.used::after, .bombbtn.locked::after {
+    content: '✕'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #c00; font-size: 20px; font-weight: bold;
   }
-  #left .n { font-size: 34px; font-weight: bold; color: #ffe14a; }
-  #left .l { font-size: 11px; opacity: .7; letter-spacing: 1px; }
-  .btn {
-    padding: 8px; border-radius: 8px; border: 2px solid #3a4560; background: #262e44; color: #eef;
-    font-weight: bold; cursor: pointer; font-family: inherit; letter-spacing: 1px;
+  .bombbtn.locked::after { color: rgba(0,0,0,.35); }
+  @keyframes glow { from { box-shadow: 0 0 2px #ffe14a } to { box-shadow: 0 0 10px #fff27a } }
+  #counter {
+    height: 30px; margin: 4px 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: #222a3e; border-radius: 14px; border: 1px solid #000; position: relative; z-index: 3;
   }
-  .btn:hover { background: #313b57; }
-  #boardwrap { background: #0c0f17; padding: 10px; border-radius: 14px; border: 3px solid #3a4560; position: relative; }
-  canvas { display: block; cursor: pointer; }
-  #overlay {
-    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-    background: rgba(8,10,18,.78); border-radius: 12px; flex-direction: column; gap: 14px;
+  #counter .star { color: #c9c9c9; font-size: 13px; }
+  #minesLeft {
+    min-width: 26px; height: 24px; border-radius: 12px; background: radial-gradient(circle at 40% 35%, #fff, #b8b8b8);
+    color: #222; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid #555; transition: transform .1s;
   }
-  #overlay h1 { margin: 0; font-size: 46px; text-shadow: 0 4px 0 #000; }
-  #overlay p { margin: 0; opacity: .85; }
+  #minesLeft.pop { animation: pop .55s ease-out; }
+  @keyframes pop { 0% { transform: scale(1) } 25% { transform: scale(2.1) } 70% { transform: scale(1.9) } 100% { transform: scale(1) } }
+  #resignBtn {
+    margin-top: 8px; padding: 5px; border-radius: 4px; border: 1px solid #000; cursor: pointer;
+    background: linear-gradient(#777, #444); color: #eee; font-weight: bold; letter-spacing: 1px; font-family: inherit; font-size: 12px;
+  }
+  #resignBtn:hover { background: linear-gradient(#888, #555); }
+  #muteBtn { margin-top: 6px; background: none; border: none; color: #cfd6ef; font-size: 11px; cursor: pointer; font-family: inherit; }
+  #boardwrap { background: #11162a; padding: 6px; border-radius: 6px; border: 2px solid #0a0d18; position: relative; }
+  canvas#cv { display: block; cursor: none; }
+  #dialog {
+    position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: none;
+    width: 230px; border-radius: 8px; padding: 14px 10px 12px; text-align: center;
+    background: linear-gradient(#f4f4f4, #c9ccd6); color: #333; border: 2px solid #7d8496;
+    box-shadow: 0 6px 24px rgba(0,0,0,.55);
+  }
+  #dialog h2 { margin: 0; font-size: 19px; color: #3c4058; }
+  #dialog p { margin: 4px 0 14px; font-size: 14px; }
+  #dialog button {
+    padding: 6px 22px; border-radius: 4px; border: 1px solid #223; cursor: pointer; font-weight: bold;
+    background: linear-gradient(#7d8fc4, #3d4f86); color: #fff; font-family: inherit; letter-spacing: 1px;
+  }
   #menu {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: rgba(8,10,18,.9); z-index: 5;
+    background: rgba(10,14,30,.88); z-index: 5;
   }
-  #menu .box { background: #1d2333; border: 3px solid #3a4560; border-radius: 16px; padding: 28px 36px; text-align: center; width: 380px; }
-  #menu h1 { margin: 0 0 4px; font-size: 44px; letter-spacing: 2px; }
-  #menu h1 .o { color: #ff9a3c; } #menu h1 .v { color: #a77bff; }
-  #menu .sub { opacity: .7; font-size: 13px; margin-bottom: 18px; }
-  #menu .btn { display: block; width: 100%; margin: 8px 0; font-size: 16px; padding: 12px; }
-  #menu .rules { font-size: 12px; text-align: left; opacity: .8; line-height: 1.5; margin-top: 14px; }
-  #menu label { font-size: 13px; opacity: .85; }
-  #menu select { font-family: inherit; background: #262e44; color: #eef; border: 1px solid #3a4560; border-radius: 6px; padding: 3px; }
+  #menu .box { background: linear-gradient(#5d6f9f, #2f3b62); border: 2px solid #8796c2; border-radius: 12px; padding: 24px 32px; text-align: center; width: 380px; }
+  #menu h1 { margin: 0 0 4px; font-size: 42px; letter-spacing: 2px; text-shadow: 0 3px 0 rgba(0,0,0,.4); }
+  #menu h1 .o { color: #ffb15a; } #menu h1 .v { color: #c7a6ff; }
+  #menu .sub { opacity: .8; font-size: 13px; margin-bottom: 16px; }
+  #menu .mbtn {
+    display: block; width: 100%; margin: 8px 0; font-size: 15px; padding: 10px; border-radius: 6px; border: 1px solid #000;
+    background: linear-gradient(#7d8fc4, #3d4f86); color: #fff; font-weight: bold; cursor: pointer; font-family: inherit; letter-spacing: 1px;
+  }
+  #menu .mbtn:hover { background: linear-gradient(#8d9fd4, #4d5f96); }
+  #menu .rules { font-size: 12px; text-align: left; opacity: .9; line-height: 1.5; margin-top: 12px; }
+  #menu label { font-size: 13px; }
+  #menu select { font-family: inherit; border-radius: 4px; padding: 2px; }
 </style>
 </head>
 <body>
-<div id="app">
+<div id="frame">
   <div id="side">
-    <div class="panel p0" id="panel0">
-      <div class="pname">ORANGE</div>
-      <div class="pkind" id="kind0">Player 1</div>
-      <div class="score" id="score0">0</div>
-      <div class="msg" id="msg0"></div>
-      <button class="bombbtn" id="bomb0">BOMB</button>
-    </div>
-    <div id="left"><div class="n" id="minesLeft">51</div><div class="l">MINES LEFT</div></div>
     <div class="panel p1" id="panel1">
-      <div class="pname">VIOLET</div>
+      <div class="turnptr">➘</div>
+      <div class="title">VIOLET</div>
+      <div class="avatar"><div class="body"></div><div class="head"></div></div>
       <div class="pkind" id="kind1">CPU</div>
-      <div class="score" id="score1">0</div>
+      <div class="arrow">▼</div>
       <div class="msg" id="msg1"></div>
-      <button class="bombbtn" id="bomb1">BOMB</button>
+      <div class="row">
+        <div class="flagbox"><canvas width="16" height="18" class="ficon" data-p="1"></canvas><span id="score1">0</span></div>
+        <button class="bombbtn" id="bomb1"><canvas width="22" height="20" class="bicon"></canvas></button>
+      </div>
     </div>
-    <button class="btn" id="resignBtn">RESIGN</button>
-    <button class="btn" id="muteBtn">SOUND: ON</button>
+    <div id="counter"><span class="star">★</span><div id="minesLeft">51</div><span class="star">★</span></div>
+    <div class="panel p0" id="panel0">
+      <div class="turnptr">➘</div>
+      <div class="title">ORANGE</div>
+      <div class="avatar"><div class="body"></div><div class="head"></div></div>
+      <div class="pkind" id="kind0">Player 1</div>
+      <div class="arrow">▼</div>
+      <div class="msg" id="msg0"></div>
+      <div class="row">
+        <div class="flagbox"><canvas width="16" height="18" class="ficon" data-p="0"></canvas><span id="score0">0</span></div>
+        <button class="bombbtn" id="bomb0"><canvas width="22" height="20" class="bicon"></canvas></button>
+      </div>
+    </div>
+    <button id="resignBtn">RESIGN</button>
+    <button id="muteBtn">🔊 sound on</button>
   </div>
   <div id="boardwrap">
     <canvas id="cv"></canvas>
-    <div id="overlay">
-      <h1 id="winText">ORANGE WINS!</h1>
-      <p id="winSub"></p>
-      <button class="btn" id="againBtn">PLAY AGAIN</button>
-      <button class="btn" id="menuBtn">MAIN MENU</button>
+    <div id="dialog">
+      <h2>Game Over</h2>
+      <p id="winText">You win!</p>
+      <button id="contBtn">CONTINUE</button>
     </div>
   </div>
 </div>
@@ -97,8 +152,8 @@
   <div class="box">
     <h1><span class="o">FLAG</span> <span class="v">DUEL</span></h1>
     <div class="sub">a two-player mine hunt</div>
-    <button class="btn" id="vsCpu">1 PLAYER vs CPU</button>
-    <button class="btn" id="vsHuman">2 PLAYERS (same screen)</button>
+    <button class="mbtn" id="vsCpu">1 PLAYER vs CPU</button>
+    <button class="mbtn" id="vsHuman">2 PLAYERS (same screen)</button>
     <label>CPU skill:
       <select id="skill">
         <option value="0">Easy</option>
@@ -108,62 +163,110 @@
     </label>
     <div class="rules">
       • 16×16 field, 51 hidden mines. Take turns uncovering squares.<br>
-      • <b>Hit a mine = you claim it and go again.</b> Hit a number/blank = turn passes.<br>
+      • <b>Uncover a mine = you claim it and go again.</b> A number or blank = turn passes.<br>
       • First to <b>26 mines</b> wins.<br>
-      • Each player gets <b>one bomb</b> (blows open a 5×5 area), usable only while behind.<br>
-      • Right-click / B toggles the bomb. Esc cancels.
+      • One <b>bomb</b> each (blows open 5×5) — it lights up only while you're behind.<br>
+      • Right-click or B arms the bomb. Esc cancels.
     </div>
   </div>
 </div>
 
 <script>
-const W = 16, H = 16, MINES = 51, WIN = 26, CS = 34;
+const W = 16, H = 16, MINES = 51, WIN = 26, CS = 30;
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 cv.width = W * CS; cv.height = H * CS;
 
-const NUMCOL = ['', '#2f6fd8', '#2c9a3a', '#d8342c', '#1d2a8a', '#8a1d1d', '#178a8a', '#222', '#777'];
-const PCOL = [['#ff9a3c', '#c2500f'], ['#a77bff', '#5a32b8']];
+const NUMCOL = ['', '#1f5fd0', '#1f8a2a', '#d82a20', '#14207a', '#7a1414', '#0f7a7a', '#222', '#666'];
+const PCOL = [['#ffb15a', '#e0640f'], ['#b98cff', '#5b34ad']];
+const PNAME = ['Orange', 'Violet'];
 
-let mine, num, open, owner, scores, turn, bombs, armed, hover, lastMove, over, mode, skill, busy, minesLeft;
-let muted = false;
+let mine, num, open, owner, popT, scores, turn, bombs, armed, hover, lastMove, lastBy, over, mode, skill, busy, minesLeft;
+let cpuCur = null;          // {x,y} pixel position of the CPU's cursor
+let muted = false, shake = 0, now = 0;
 
-// ---------- sound ----------
-let ac = null;
-function tone(f, d, type = 'square', v = 0.08, slide = 0) {
-  if (muted) return;
-  if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
-  const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
-  o.type = type; o.frequency.setValueAtTime(f, t);
-  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
-  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d);
+// ================= SOUND (modelled on the reference video) =================
+let ac = null, master = null;
+function A() {
+  if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.9; master.connect(ac.destination); }
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+function osc(type, f0, f1, t0, dur, vol, attack = 0.004, dest) {
+  const a = A(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t0);
+  if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(dest || master); o.start(t0); o.stop(t0 + dur + 0.02);
+  return o;
+}
+// short percussive "tok": pitch drops fast 370 -> 40Hz
+function thud(t, hi = 370, vol = 0.5) {
+  osc('sine', hi, 40, t, 0.09, vol);
+  osc('triangle', hi * 2, 80, t, 0.03, vol * 0.3);
+}
+// rising buzzy "bloop" (turn passes): ~260 -> 770Hz in 0.14s, harmonic rich, low-passed
+function bloop(t) {
+  const a = A(), lp = a.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(master);
+  osc('sawtooth', 130, 390, t, 0.15, 0.22, 0.01, lp);
+  osc('square', 260, 780, t, 0.14, 0.06, 0.01, lp);
+}
+// fluttering bell (mine claimed): 1335Hz + 581Hz partials with tremolo, ~0.9s ring
+function bell(t) {
+  const a = A(), g = a.createGain(), trem = a.createOscillator(), tg = a.createGain();
+  g.gain.value = 1; trem.frequency.value = 9; tg.gain.value = 0.35;
+  trem.connect(tg); tg.connect(g.gain); trem.start(t); trem.stop(t + 1);
+  g.connect(master);
+  osc('sine', 1335, 1335, t, 0.95, 0.16, 0.006, g);
+  osc('sine', 581, 581, t, 0.85, 0.12, 0.006, g);
+  osc('sine', 2670, 2670, t, 0.35, 0.04, 0.004, g);
 }
 const sfx = {
-  click: () => tone(520, 0.06, 'triangle', 0.1),
-  flag: () => { tone(660, 0.08); setTimeout(() => tone(990, 0.12), 70); },
-  boom: () => { tone(160, 0.5, 'sawtooth', 0.14, -120); tone(90, 0.6, 'square', 0.1, -50); },
-  win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.22, 'square', 0.09), i * 140)),
-  lose: () => [392, 330, 262].forEach((f, i) => setTimeout(() => tone(f, 0.3, 'triangle', 0.1), i * 180)),
+  safe() { if (muted) return; const t = A().currentTime; thud(t); bloop(t + 0.26); },
+  claim() { if (muted) return; const t = A().currentTime; thud(t, 110, 0.6); bell(t + 0.05); },
+  boom() {
+    if (muted) return;
+    const a = A(), t = a.currentTime, len = a.sampleRate * 0.9, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+    const s = a.createBufferSource(), lp = a.createBiquadFilter(), g = a.createGain();
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(2200, t); lp.frequency.exponentialRampToValueAtTime(120, t + 0.8);
+    g.gain.value = 0.9; s.buffer = buf; s.connect(lp); lp.connect(g); g.connect(master); s.start(t);
+    osc('sine', 120, 35, t, 0.6, 0.6);
+  },
+  arm() { if (muted) return; const t = A().currentTime; osc('square', 880, 880, t, 0.06, 0.05); osc('square', 660, 660, t + 0.07, 0.06, 0.05); },
+  // win fanfare: G4 C5 sparkle, then G5/C6 trill resolving on C6 (~1.5s)
+  win() {
+    if (muted) return;
+    const t = A().currentTime + 0.05;
+    const seq = [[392, 0, .1], [523, .1, .1], [1047, .2, .08], [659, .27, .07], [1319, .33, .08], [784, .4, .14],
+      [1047, .55, .14], [784, .7, .07], [1047, .77, .07], [2093, .84, .14], [784, .98, .07], [1047, 1.05, .12], [784, 1.18, .1], [1047, 1.28, .35]];
+    for (const [f, s, d] of seq) { osc('square', f, f, t + s, d + 0.06, 0.06); osc('sine', f, f, t + s, d + 0.1, 0.1); }
+  },
+  lose() {
+    if (muted) return;
+    const t = A().currentTime + 0.05;
+    [[523, 0], [494, .18], [440, .36], [349, .54]].forEach(([f, s]) => { osc('triangle', f, f, t + s, 0.3, 0.16); osc('square', f / 2, f / 2, t + s, 0.25, 0.03); });
+  },
 };
 
-// ---------- game setup ----------
+// ================= GAME =================
 function newGame() {
   mine = new Array(W * H).fill(false);
   num = new Array(W * H).fill(0);
   open = new Array(W * H).fill(false);
   owner = new Array(W * H).fill(-1);
-  scores = [0, 0]; bombs = [true, true]; armed = false; hover = -1; lastMove = []; over = false; busy = false;
-  minesLeft = MINES;
+  popT = new Array(W * H).fill(-9);
+  scores = [0, 0]; bombs = [true, true]; armed = false; hover = -1; lastMove = []; lastBy = 0;
+  over = false; busy = false; minesLeft = MINES; cpuCur = null;
   turn = Math.random() < 0.5 ? 0 : 1;
   let placed = 0;
-  while (placed < MINES) {
-    const i = (Math.random() * W * H) | 0;
-    if (!mine[i]) { mine[i] = true; placed++; }
-  }
+  while (placed < MINES) { const i = (Math.random() * W * H) | 0; if (!mine[i]) { mine[i] = true; placed++; } }
   for (let i = 0; i < W * H; i++) num[i] = nbrs(i).filter(j => mine[j]).length;
-  document.getElementById('overlay').style.display = 'none';
-  updateUI(); draw();
+  document.getElementById('dialog').style.display = 'none';
+  updateUI();
   maybeCpu();
 }
 
@@ -185,16 +288,15 @@ function area5(i) {
   return r;
 }
 
-// reveal a single cell (and flood blanks). Returns number of mines claimed.
 function reveal(i, p) {
   if (open[i]) return 0;
-  open[i] = true;
+  open[i] = true; popT[i] = now;
   if (mine[i]) { owner[i] = p; scores[p]++; minesLeft--; return 1; }
   if (num[i] === 0) {
     const st = [i];
     while (st.length) {
       const c = st.pop();
-      for (const n of nbrs(c)) if (!open[n] && !mine[n]) { open[n] = true; if (num[n] === 0) st.push(n); }
+      for (const n of nbrs(c)) if (!open[n] && !mine[n]) { open[n] = true; popT[n] = now; if (num[n] === 0) st.push(n); }
     }
   }
   return 0;
@@ -205,6 +307,7 @@ function canBomb(p) { return bombs[p] && scores[p] < scores[1 - p] && !over; }
 function play(i, useBomb) {
   if (over) return;
   const p = turn;
+  lastBy = p;
   if (useBomb) {
     if (!canBomb(p)) return;
     bombs[p] = false; armed = false;
@@ -212,18 +315,22 @@ function play(i, useBomb) {
     lastMove = cells;
     let got = 0;
     for (const c of cells) got += reveal(c, p);
-    sfx.boom();
-    shake = 10;
+    sfx.boom(); shake = 12;
+    if (got) popCounter();
     if (!checkWin()) turn = 1 - p;
   } else {
     if (open[i]) return;
     lastMove = [i];
-    const got = reveal(i, p);
-    if (got) { sfx.flag(); checkWin(); }
-    else { sfx.click(); turn = 1 - p; }
+    if (reveal(i, p)) { sfx.claim(); popCounter(); checkWin(); }
+    else { sfx.safe(); turn = 1 - p; }
   }
-  updateUI(); draw();
+  updateUI();
   maybeCpu();
+}
+
+function popCounter() {
+  const el = document.getElementById('minesLeft');
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
 }
 
 function checkWin() {
@@ -232,53 +339,64 @@ function checkWin() {
 }
 
 function endGame(p, resigned) {
-  over = true; armed = false;
-  // reveal the rest of the mines (unclaimed)
-  const ov = document.getElementById('overlay');
-  const name = p === 0 ? 'ORANGE' : 'VIOLET';
-  document.getElementById('winText').textContent = name + ' WINS!';
-  document.getElementById('winText').style.color = PCOL[p][0];
-  document.getElementById('winSub').textContent = resigned
-    ? (p === 0 ? 'Violet' : 'Orange') + ' resigned.'
-    : `Final score ${scores[0]} – ${scores[1]}`;
-  if (mode === 'cpu' && p === 1) sfx.lose(); else sfx.win();
-  setTimeout(() => { ov.style.display = 'flex'; draw(); }, 600);
-  updateUI(); draw();
+  over = true; armed = false; cpuCur = null;
+  // the whole field is uncovered at game over
+  setTimeout(() => {
+    for (let i = 0; i < W * H; i++) if (!open[i]) { open[i] = true; popT[i] = now + Math.random() * 300; }
+  }, 500);
+  let txt;
+  if (mode === 'cpu') txt = p === 0 ? 'You win!' : 'You lose!';
+  else txt = PNAME[p] + ' wins!';
+  if (resigned) txt += ` (${PNAME[1 - p]} resigned)`;
+  else txt += `  ${scores[p]} – ${scores[1 - p]}`;
+  document.getElementById('winText').textContent = txt;
+  setTimeout(() => { if (mode === 'cpu' && p === 1) sfx.lose(); else sfx.win(); }, resigned ? 0 : 900);
+  setTimeout(() => { document.getElementById('dialog').style.display = 'block'; }, resigned ? 300 : 1300);
+  updateUI();
 }
 
-// ---------- CPU ----------
+// ================= CPU =================
 function isCpu(p) { return mode === 'cpu' && p === 1; }
 
 function maybeCpu() {
   if (over || !isCpu(turn) || busy) return;
   busy = true;
-  setTimeout(() => { busy = false; if (!over && isCpu(turn)) cpuMove(); }, 550 + Math.random() * 450);
+  const { prob, sure } = analyse();
+  const move = chooseMove(prob, sure);
+  // human-like pacing: obvious follow-up mines come quicker, guesses take longer
+  const think = move.easy ? 700 + Math.random() * 600 : 1200 + Math.random() * 1300;
+  const tx = (move.cell % W) * CS + CS / 2, ty = ((move.cell / W) | 0) * CS + CS / 2;
+  if (!cpuCur) cpuCur = { x: tx + (Math.random() - .5) * 200, y: ty + (Math.random() - .5) * 200 };
+  const from = { x: cpuCur.x, y: cpuCur.y };
+  const glideStart = performance.now() + think * 0.35, glideDur = think * 0.5;
+  cpuGlide = { from, tx, ty, glideStart, glideDur };
+  setTimeout(() => {
+    busy = false; cpuGlide = null;
+    if (!over && isCpu(turn)) { cpuCur = { x: tx, y: ty }; play(move.cell, move.bomb); }
+  }, think);
 }
+let cpuGlide = null;
 
-// Mine probability estimates for every closed cell. Mines are GOOD to click in this game.
 function analyse() {
   const prob = new Array(W * H).fill(-1);
   const sure = new Set(), safe = new Set();
-  // iterate simple deductions until stable
+  const known = i => open[i] && mine[i];
   let changed = true, guard = 0;
-  const known = i => open[i] && mine[i]; // claimed mines
   while (changed && guard++ < 20) {
     changed = false;
     for (let i = 0; i < W * H; i++) {
       if (!open[i] || mine[i] || num[i] === 0) continue;
       const ns = nbrs(i);
       const closed = ns.filter(n => !open[n] && !sure.has(n) && !safe.has(n));
-      const mines = ns.filter(n => known(n) || sure.has(n)).length;
-      const need = num[i] - mines;
+      const need = num[i] - ns.filter(n => known(n) || sure.has(n)).length;
       if (!closed.length) continue;
       if (need === closed.length) { closed.forEach(n => sure.add(n)); changed = true; }
       else if (need === 0) { closed.forEach(n => safe.add(n)); changed = true; }
     }
   }
   const closedCount = open.reduce((a, o) => a + (o ? 0 : 1), 0);
-  const unknownMines = minesLeft - sure.size;
   const unknownCells = closedCount - sure.size - safe.size;
-  const density = unknownCells > 0 ? unknownMines / unknownCells : 0;
+  const density = unknownCells > 0 ? (minesLeft - sure.size) / unknownCells : 0;
   for (let i = 0; i < W * H; i++) {
     if (open[i]) continue;
     if (sure.has(i)) { prob[i] = 1; continue; }
@@ -291,8 +409,8 @@ function analyse() {
       const need = num[n] - ns.filter(m => known(m) || sure.has(m)).length;
       if (closed.length) {
         const pr = need / closed.length;
-        best = best < 0 ? pr : (pr === 0 ? 0 : Math.max(best, pr) * 0.6 + Math.min(best, pr) * 0.4);
         if (pr === 0) { best = 0; break; }
+        best = best < 0 ? pr : Math.max(best, pr) * 0.6 + Math.min(best, pr) * 0.4;
       }
     }
     prob[i] = best < 0 ? density : best;
@@ -300,14 +418,9 @@ function analyse() {
   return { prob, sure };
 }
 
-function cpuMove() {
-  const { prob, sure } = analyse();
-  const p = turn;
-  const closed = [];
+function chooseMove(prob, sure) {
+  const p = turn, closed = [];
   for (let i = 0; i < W * H; i++) if (!open[i]) closed.push(i);
-  if (!closed.length) return;
-
-  // Bomb decision
   if (canBomb(p) && (scores[1 - p] - scores[p] >= (skill === 2 ? 3 : 5) || scores[1 - p] >= WIN - 6)) {
     let bestC = -1, bestV = 0;
     for (let i = 0; i < W * H; i++) {
@@ -315,143 +428,178 @@ function cpuMove() {
       for (const c of area5(i)) if (!open[c] && prob[c] < 1) v += prob[c];
       if (v > bestV) { bestV = v; bestC = i; }
     }
-    if (bestC >= 0 && bestV >= (skill === 0 ? 1.5 : 2.5) && (sure.size === 0 || skill === 0)) {
-      play(bestC, true); return;
-    }
+    if (bestC >= 0 && bestV >= (skill === 0 ? 1.5 : 2.5) && (sure.size === 0 || skill === 0)) return { cell: bestC, bomb: true };
   }
-
-  // Certain mines first (easy CPU sometimes misses them)
   const sureList = [...sure];
-  if (sureList.length && !(skill === 0 && Math.random() < 0.35)) {
-    play(sureList[(Math.random() * sureList.length) | 0], false); return;
-  }
-
-  let pick;
-  if (skill === 0) {
-    // mostly random with a slight bias toward likely mines
-    pick = Math.random() < 0.5
-      ? closed[(Math.random() * closed.length) | 0]
-      : weightedBest(closed, prob, 0.25);
-  } else {
-    pick = weightedBest(closed, prob, skill === 2 ? 0.0 : 0.08);
-  }
-  play(pick, false);
+  if (sureList.length && !(skill === 0 && Math.random() < 0.35))
+    return { cell: sureList[(Math.random() * sureList.length) | 0], easy: true };
+  if (skill === 0)
+    return { cell: Math.random() < 0.5 ? closed[(Math.random() * closed.length) | 0] : weightedBest(closed, prob, 0.25) };
+  return { cell: weightedBest(closed, prob, skill === 2 ? 0 : 0.08) };
 }
 
 function weightedBest(cells, prob, noise) {
   let best = -1, bv = -1;
-  for (const c of cells) {
-    const v = prob[c] + Math.random() * noise + Math.random() * 0.001;
-    if (v > bv) { bv = v; best = c; }
-  }
+  for (const c of cells) { const v = prob[c] + Math.random() * noise + Math.random() * 0.001; if (v > bv) { bv = v; best = c; } }
   return best;
 }
 
-// ---------- drawing ----------
-let shake = 0;
-function drawFlag(x, y, p) {
+// ================= DRAWING =================
+function flagShape(c, x, y, s, p) {
   const [c1, c2] = PCOL[p];
-  // pole
-  ctx.fillStyle = '#2a2a2a';
-  ctx.fillRect(x + 10, y + 6, 3, 22);
-  ctx.fillRect(x + 6, y + 26, 13, 3);
-  // pennant (triangular, original style)
-  ctx.beginPath();
-  ctx.moveTo(x + 13, y + 6);
-  ctx.lineTo(x + 28, y + 12);
-  ctx.lineTo(x + 13, y + 18);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(x + 13, y + 6, x + 28, y + 18);
+  c.fillStyle = '#2b2b2b';
+  c.fillRect(x + 8 * s, y + 4 * s, 2.2 * s, 19 * s);
+  c.fillRect(x + 4.5 * s, y + 22 * s, 10 * s, 2.5 * s);
+  c.beginPath();
+  c.moveTo(x + 10 * s, y + 4 * s);
+  c.lineTo(x + 24 * s, y + 9.5 * s);
+  c.lineTo(x + 10 * s, y + 15 * s);
+  c.closePath();
+  const g = c.createLinearGradient(x + 10 * s, y + 4 * s, x + 24 * s, y + 15 * s);
   g.addColorStop(0, c1); g.addColorStop(1, c2);
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1; ctx.stroke();
-  // small star
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.arc(x + 18, y + 12, 1.8, 0, Math.PI * 2); ctx.fill();
+  c.fillStyle = g; c.fill();
+  c.strokeStyle = 'rgba(0,0,0,.5)'; c.lineWidth = 1; c.stroke();
+  c.fillStyle = '#fff';
+  c.beginPath(); c.arc(x + 14.5 * s, y + 9.5 * s, 1.6 * s, 0, Math.PI * 2); c.fill();
 }
 
 function drawMine(x, y) {
-  ctx.fillStyle = '#222';
-  ctx.beginPath(); ctx.arc(x + CS / 2, y + CS / 2, 8, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+  const cx = x + CS / 2, cy = y + CS / 2;
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2;
   for (let a = 0; a < 4; a++) {
-    const ang = a * Math.PI / 4;
-    ctx.beginPath();
-    ctx.moveTo(x + CS / 2 + Math.cos(ang) * 12, y + CS / 2 + Math.sin(ang) * 12);
-    ctx.lineTo(x + CS / 2 - Math.cos(ang) * 12, y + CS / 2 - Math.sin(ang) * 12);
-    ctx.stroke();
+    const an = a * Math.PI / 4;
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(an) * 10, cy + Math.sin(an) * 10); ctx.lineTo(cx - Math.cos(an) * 10, cy - Math.sin(an) * 10); ctx.stroke();
   }
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.arc(x + CS / 2 - 3, y + CS / 2 - 3, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx - 2.5, cy - 2.5, 1.8, 0, Math.PI * 2); ctx.fill();
 }
 
-function draw() {
+function closedTile(x, y, i) {
+  // glossy slate-blue pillow tile
+  const alt = ((i % W) + ((i / W) | 0)) % 2;
+  const g = ctx.createLinearGradient(x, y, x, y + CS);
+  g.addColorStop(0, alt ? '#8ab0d8' : '#82a8d0');
+  g.addColorStop(0.5, alt ? '#5f86b4' : '#5a80ad');
+  g.addColorStop(1, alt ? '#3e5f8a' : '#3a5a84');
+  ctx.fillStyle = g;
+  roundRect(x + 1, y + 1, CS - 2, CS - 2, 4); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.28)';
+  roundRect(x + 3, y + 2, CS - 6, 6, 3); ctx.fill();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+}
+
+function dashedBox(x, y, w, h, color) {
+  ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.lineDashOffset = -now / 40;
+  ctx.strokeStyle = '#000'; ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+  ctx.strokeStyle = color; ctx.lineDashOffset = -now / 40 + 4.5; ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+  ctx.setLineDash([]);
+}
+
+function frame(t) {
+  now = t;
   ctx.save();
-  if (shake > 0) { ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake); }
-  ctx.fillStyle = '#0c0f17'; ctx.fillRect(-20, -20, cv.width + 40, cv.height + 40);
+  if (shake > 0) { ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake); shake *= 0.88; if (shake < .4) shake = 0; }
+  ctx.fillStyle = '#11162a'; ctx.fillRect(-20, -20, cv.width + 40, cv.height + 40);
   const bombArea = armed && hover >= 0 ? new Set(area5(hover)) : null;
   for (let i = 0; i < W * H; i++) {
     const x = (i % W) * CS, y = ((i / W) | 0) * CS;
-    if (!open[i]) {
-      // closed tile: raised slate block with a checker tint
-      const alt = ((i % W) + ((i / W) | 0)) % 2;
-      const g = ctx.createLinearGradient(x, y, x, y + CS);
-      g.addColorStop(0, alt ? '#5e7fa3' : '#58789c');
-      g.addColorStop(1, alt ? '#3c5677' : '#385170');
-      ctx.fillStyle = g; ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
-      ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(x + 1, y + 1, CS - 2, 3);
-      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 1, y + CS - 4, CS - 2, 3);
-      if (i === hover && !over && !armed && !isCpu(turn)) {
-        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
-      }
-      if (over && mine[i]) drawMine(x, y);
-    } else {
-      ctx.fillStyle = owner[i] >= 0 ? (owner[i] === 0 ? '#ffe2c4' : '#e6dcff') : '#e9e4d6';
-      ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
-      if (mine[i]) drawFlag(x, y, owner[i]);
-      else if (num[i]) {
-        ctx.fillStyle = NUMCOL[num[i]];
-        ctx.font = 'bold 20px Verdana';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(num[i], x + CS / 2, y + CS / 2 + 1);
-      }
-    }
-    if (bombArea && bombArea.has(i)) {
-      ctx.fillStyle = 'rgba(255,60,40,.35)'; ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+    if (!open[i] || now < popT[i]) { closedTile(x, y, i); continue; }
+    const age = now - popT[i];
+    // revealed square: warm sand tile
+    const alt = ((i % W) + ((i / W) | 0)) % 2;
+    ctx.fillStyle = owner[i] === 0 ? '#ffd9b0' : owner[i] === 1 ? '#e2d4ff' : (alt ? '#efe6cc' : '#e9dfc3');
+    ctx.fillRect(x + 1, y + 1, CS - 2, CS - 2);
+    ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(x + 1, y + CS - 3, CS - 2, 2);
+    if (mine[i]) {
+      if (owner[i] >= 0) {
+        const s = age < 220 ? 0.4 + 0.75 * Math.sin(Math.min(1, age / 220) * Math.PI * 0.75) / 0.92 : 1;
+        ctx.save(); ctx.translate(x + CS / 2, y + CS / 2); ctx.scale(s, s);
+        flagShape(ctx, -15 + 1, -15 + 1, 1.05, owner[i]); ctx.restore();
+      } else drawMine(x, y);
+    } else if (num[i]) {
+      ctx.fillStyle = NUMCOL[num[i]];
+      ctx.font = 'bold 18px Verdana';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(num[i], x + CS / 2, y + CS / 2 + 1);
     }
   }
-  // last move marker
+  if (bombArea) for (const i of bombArea) {
+    ctx.fillStyle = 'rgba(255,70,30,.35)'; ctx.fillRect((i % W) * CS + 1, ((i / W) | 0) * CS + 1, CS - 2, CS - 2);
+  }
+  // last move marker, in the colour of whoever made it
   if (lastMove.length) {
     const xs = lastMove.map(i => i % W), ys = lastMove.map(i => (i / W) | 0);
     const x0 = Math.min(...xs) * CS, y0 = Math.min(...ys) * CS;
-    const x1 = (Math.max(...xs) + 1) * CS, y1 = (Math.max(...ys) + 1) * CS;
-    ctx.strokeStyle = '#ffe14a'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]);
-    ctx.strokeRect(x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4);
-    ctx.setLineDash([]);
+    dashedBox(x0, y0, (Math.max(...xs) + 1) * CS - x0, (Math.max(...ys) + 1) * CS - y0, PCOL[lastBy][1]);
   }
+  // current player's cursor
+  if (!over) {
+    if (isCpu(turn)) {
+      if (cpuGlide) {
+        const k = Math.max(0, Math.min(1, (performance.now() - cpuGlide.glideStart) / cpuGlide.glideDur));
+        const e = k * k * (3 - 2 * k);
+        cpuCur = { x: cpuGlide.from.x + (cpuGlide.tx - cpuGlide.from.x) * e, y: cpuGlide.from.y + (cpuGlide.ty - cpuGlide.from.y) * e };
+      }
+      if (cpuCur) {
+        const cx = Math.max(0, Math.min(W - 1, Math.floor(cpuCur.x / CS))), cy = Math.max(0, Math.min(H - 1, Math.floor(cpuCur.y / CS)));
+        dashedBox(cx * CS, cy * CS, CS, CS, PCOL[turn][0]);
+        drawPointer(cpuCur.x + 4, cpuCur.y + 4);
+      }
+    } else if (hover >= 0 && !armed) {
+      dashedBox((hover % W) * CS, ((hover / W) | 0) * CS, CS, CS, PCOL[turn][0]);
+    }
+  }
+  if (hoverPx && !isCpu(turn)) drawPointer(hoverPx.x, hoverPx.y);
   ctx.restore();
-  if (shake > 0) { shake *= 0.85; if (shake < 0.5) shake = 0; requestAnimationFrame(draw); }
+  requestAnimationFrame(frame);
+}
+let hoverPx = null;
+
+function drawPointer(x, y) {
+  ctx.save(); ctx.translate(x, y);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 15); ctx.lineTo(4, 11); ctx.lineTo(7, 17); ctx.lineTo(9, 16); ctx.lineTo(6, 10); ctx.lineTo(11, 10); ctx.closePath();
+  ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
 }
 
-// ---------- UI ----------
+// small icons in the side panels
+function drawIcons() {
+  document.querySelectorAll('.ficon').forEach(c => { const g = c.getContext('2d'); g.clearRect(0, 0, 16, 18); flagShape(g, -3, -3, 0.75, +c.dataset.p); });
+  document.querySelectorAll('.bicon').forEach(c => {
+    const g = c.getContext('2d'); g.clearRect(0, 0, 22, 20);
+    g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(10, 12, 6.5, 0, Math.PI * 2); g.fill();
+    g.fillRect(13, 4, 3, 4); g.strokeStyle = '#a66'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(15, 4); g.quadraticCurveTo(18, 0, 20, 3); g.stroke();
+    g.fillStyle = '#fc3'; g.beginPath(); g.arc(20, 3, 1.8, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(8, 10, 1.6, 0, Math.PI * 2); g.fill();
+  });
+}
+
+// ================= UI =================
 function updateUI() {
   for (let p = 0; p < 2; p++) {
     document.getElementById('score' + p).textContent = scores[p];
     document.getElementById('panel' + p).classList.toggle('active', turn === p && !over);
     const b = document.getElementById('bomb' + p);
-    b.disabled = !canBomb(p) || turn !== p || isCpu(p);
-    b.textContent = !bombs[p] ? 'BOMB USED' : (armed && turn === p ? 'BOMB ARMED' : 'BOMB');
-    b.classList.toggle('armed', armed && turn === p);
+    b.className = 'bombbtn' + (!bombs[p] ? ' used' : canBomb(p) ? (armed && turn === p ? ' armed' : ' ready') : ' locked');
     let m = '';
     if (!over && turn === p) {
-      if (isCpu(p)) m = 'Thinking…';
-      else if (WIN - scores[p] === 1) m = '1 more mine to win!';
-      else m = 'Your turn — make a move.';
-    }
+      if (isCpu(p)) m = 'CPU is making a move.';
+      else if (mode === 'human') m = WIN - scores[p] === 1 ? '1 more mine to win!' : "It's your turn! Make a move.";
+      else m = WIN - scores[p] === 1 ? '1 more mine to win!' : "It's your turn! Make a move.";
+      if (armed && turn === p) m = 'Bomb armed! Pick a target.';
+    } else if (!over && !isCpu(p) && mode === 'cpu') m = '';
+    else if (!over && mode === 'human') m = '';
     document.getElementById('msg' + p).textContent = m;
   }
-  document.getElementById('kind0').textContent = 'Player 1';
-  document.getElementById('kind1').textContent = mode === 'cpu' ? 'CPU (' + ['Easy', 'Normal', 'Hard'][skill] + ')' : 'Player 2';
+  document.getElementById('kind0').textContent = mode === 'cpu' ? 'You' : 'Player 1';
+  document.getElementById('kind1').textContent = mode === 'cpu' ? 'CPU · ' + ['Easy', 'Normal', 'Hard'][skill] : 'Player 2';
   document.getElementById('minesLeft').textContent = minesLeft;
 }
 
@@ -462,9 +610,14 @@ function cellAt(e) {
   return x >= 0 && y >= 0 && x < W && y < H ? y * W + x : -1;
 }
 
-cv.addEventListener('mousemove', e => { const c = cellAt(e); if (c !== hover) { hover = c; draw(); } });
-cv.addEventListener('mouseleave', () => { hover = -1; draw(); });
+cv.addEventListener('mousemove', e => {
+  const r = cv.getBoundingClientRect();
+  hoverPx = { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height };
+  hover = cellAt(e);
+});
+cv.addEventListener('mouseleave', () => { hover = -1; hoverPx = null; });
 cv.addEventListener('click', e => {
+  A();
   if (over || isCpu(turn) || busy) return;
   const c = cellAt(e); if (c < 0) return;
   if (armed) play(c, true);
@@ -475,23 +628,23 @@ cv.addEventListener('contextmenu', e => { e.preventDefault(); toggleBomb(); });
 function toggleBomb() {
   if (over || isCpu(turn)) return;
   if (!armed && !canBomb(turn)) return;
-  armed = !armed; updateUI(); draw();
+  armed = !armed; if (armed) sfx.arm(); updateUI();
 }
 for (let p = 0; p < 2; p++) document.getElementById('bomb' + p).onclick = () => { if (turn === p) toggleBomb(); };
 window.addEventListener('keydown', e => {
   if (e.key === 'b' || e.key === 'B') toggleBomb();
-  if (e.key === 'Escape' && armed) { armed = false; updateUI(); draw(); }
+  if (e.key === 'Escape' && armed) { armed = false; updateUI(); }
 });
 
 document.getElementById('resignBtn').onclick = () => {
   if (over || document.getElementById('menu').style.display !== 'none') return;
   const loser = mode === 'cpu' ? 0 : turn;
-  if (confirm((loser === 0 ? 'Orange' : 'Violet') + ': resign this game?')) endGame(1 - loser, true);
+  if (confirm(PNAME[loser] + ': resign this game?')) endGame(1 - loser, true);
 };
-document.getElementById('muteBtn').onclick = e => { muted = !muted; e.target.textContent = 'SOUND: ' + (muted ? 'OFF' : 'ON'); };
-document.getElementById('againBtn').onclick = newGame;
-document.getElementById('menuBtn').onclick = () => { document.getElementById('menu').style.display = 'flex'; };
+document.getElementById('muteBtn').onclick = e => { muted = !muted; e.target.textContent = muted ? '🔇 sound off' : '🔊 sound on'; };
+document.getElementById('contBtn').onclick = () => { document.getElementById('dialog').style.display = 'none'; document.getElementById('menu').style.display = 'flex'; };
 function start(m) {
+  A();
   mode = m; skill = +document.getElementById('skill').value;
   document.getElementById('menu').style.display = 'none';
   newGame();
@@ -499,11 +652,12 @@ function start(m) {
 document.getElementById('vsCpu').onclick = () => start('cpu');
 document.getElementById('vsHuman').onclick = () => start('human');
 
-// initial empty board behind menu
+// idle board behind the menu
 mode = 'cpu'; skill = 1;
 mine = new Array(W * H).fill(false); num = new Array(W * H).fill(0); open = new Array(W * H).fill(false);
-owner = new Array(W * H).fill(-1); scores = [0, 0]; bombs = [true, true]; lastMove = []; turn = 0; minesLeft = MINES; over = true;
-updateUI(); draw();
+owner = new Array(W * H).fill(-1); popT = new Array(W * H).fill(-9);
+scores = [0, 0]; bombs = [true, true]; lastMove = []; turn = 0; minesLeft = MINES; over = true;
+drawIcons(); updateUI(); requestAnimationFrame(frame);
 </script>
 </body>
 </html>
