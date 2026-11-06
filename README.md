@@ -9,8 +9,8 @@ A two-player mine-hunt game in the style of MSN Minesweeper Flags.
 - Play vs CPU (Easy / Normal / Hard) or 2 players on one screen.
 
 ## Play
-- **Browser:** open `index.html`.
-- **Windows:** download `Flag Duel.exe` from the Releases page.
+- **Browser:** https://thegooseygoose.github.io/flag-duel/ (or open `index.html`).
+- **Windows:** download `Flag Duel.exe` from [Releases](https://github.com/thegooseygoose/flag-duel/releases/latest).
 
 ## Build the exe
 ```
